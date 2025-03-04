@@ -13,45 +13,12 @@ class Heroicon extends Tags
 {
     protected static $handle = 'heroicon';
 
-    private function renderBladeToHtml(string $variant, string $icon, Collection $attrs): ?string
-    {
-        $attrsString = $attrs->map(function ($value, $key) {
-            $parsedValue = gettype($value) === 'string' ? $value : var_export($value, true);
-
-            return $key.'='.'"'.$parsedValue.'"';
-        })->join(' ');
-
-        try {
-            return Blade::render('<x-heroicon-'.$variant[0].'-'.$icon.' '.$attrsString.' />');
-        } catch (\Throwable $e) {
-            return null;
-        }
-    }
-
-    private function render(?string $variant = null, ?string $icon = null): ?string
-    {
-        $variant = $variant ?? Str::lower($this->params->get('variant'));
-        $icon = $icon ?? Str::lower($this->params->get('icon'));
-
-        $attrs = $this->params->except(['as', 'scope', 'variant', 'icon']);
-
-        return $this->renderBladeToHtml($variant, $icon, $attrs);
-    }
-
     /**
      * The {{ heroicon }} tag.
      */
     public function index(): ?string
     {
         return $this->render();
-    }
-
-    /**
-     * The {{ heroicon:mini }} tag.
-     */
-    public function mini(): ?string
-    {
-        return $this->render('mini');
     }
 
     /**
@@ -71,6 +38,22 @@ class Heroicon extends Tags
     }
 
     /**
+     * The {{ heroicon:mini }} tag.
+     */
+    public function mini(): ?string
+    {
+        return $this->render('mini');
+    }
+
+    /**
+     * The {{ heroicon:micro }} tag.
+     */
+    public function micro(): ?string
+    {
+        return $this->render('micro');
+    }
+
+    /**
      * The {{ heroicon:{variant}:{icon} }} tag.
      */
     public function wildcard(string $tag): ?string
@@ -79,5 +62,37 @@ class Heroicon extends Tags
         $icon = Str::kebab($icon);
 
         return $this->render($variant, $icon);
+    }
+
+    protected function render(?string $variant = null, ?string $icon = null): ?string
+    {
+        $variant = $variant ?? Str::lower($this->params->get('variant'));
+        $icon = $icon ?? Str::lower($this->params->get('icon'));
+
+        $attrs = $this->params->except(['as', 'scope', 'variant', 'icon']);
+
+        return $this->renderBladeToHtml($variant, $icon, $attrs);
+    }
+
+    protected function renderBladeToHtml(string $variant, string $icon, Collection $attrs): ?string
+    {
+        $variant = match ($variant) {
+            'outline' => 'o',
+            'solid' => 's',
+            'mini' => 'm',
+            'micro' => 'c',
+        };
+
+        $attrsString = $attrs->map(function ($value, $key) {
+            $parsedValue = gettype($value) === 'string' ? $value : var_export($value, true);
+
+            return $key.'='.'"'.$parsedValue.'"';
+        })->join(' ');
+
+        try {
+            return Blade::render("<x-heroicon-{$variant}-{$icon} {$attrsString} />");
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 }
